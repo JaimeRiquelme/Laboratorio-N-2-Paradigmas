@@ -1,0 +1,6 @@
+:- module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
+
+drive(Letras,Nombre,Capacidad,[Letras,Nombre,Capacidad]).
+
+addDriveToDrives(NewDrive,Drives,UpdateDrives):-
+   append(Drives,[NewDrive],UpdateDrives).
