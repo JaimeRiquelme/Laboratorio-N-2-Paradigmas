@@ -1,18 +1,30 @@
-:- module(tda_system_20964708_RiquelmeOlguin, [filesystem/4, system/2, systemAddDrive/5, systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3]).
+:- module(tda_system_20964708_RiquelmeOlguin, [filesystem/7,
+                                               system/2,
+                                               systemAddDrive/5,
+                                               systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3, systemLogin/3,
+                                               systemLogout/2,systemSwitchDrive/3]).
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
 
-filesystem(Nombre, Drives, Usuarios, [Nombre, Drives, Usuarios]).
+filesystem(Nombre, Drives, Usuarios,UsuarioLogeado,DriveActual,Papelera, [Nombre, Drives, Usuarios,UsuarioLogeado,DriveActual,Papelera]).
 
-system(Nombre, Sistema) :-
-    filesystem(Nombre, [], [], Sistema).
+system(NombreSistema, Sistema) :-
+    string(NombreSistema),
+    nombre_Sistema(NombreSistema,Nombre),
+    filesystem(Nombre, [], [],[],[],[], Sistema).
 
 systemAddDrive(Sistema, Letra, Nombre, Capacidad, Newsistema) :-
     drive(Letra, Nombre, Capacidad, NewDrive),
     getDrives(Sistema, Drives),
+    \+ member([Letra, _, _], Drives), % Verifica que la letra no esté presente en Drives
     addDriveToDrives(NewDrive, Drives, UpdateDrives),
     setDrives(Sistema, UpdateDrives, Newsistema).
+
+systemRegister(Sistema, NombreUser, Sistema) :-
+    getUsuarios(Sistema, Usuarios),
+    user(NombreUser,NewUser),
+    member(NewUser, Usuarios).
 
 systemRegister(Sistema, NombreUser, Newsistema) :-
     user(NombreUser, NewUser),
@@ -21,16 +33,80 @@ systemRegister(Sistema, NombreUser, Newsistema) :-
     addUserToUsers(NewUser, Usuarios, UpdateUsers),
     setUser(Sistema, UpdateUsers, Newsistema).
 
+systemLogin(Sistema, NombreUser, Newsistema) :-
+    getUsuarioLogeado(Sistema, UsuarioLogeado),
+    UsuarioLogeado = [], % Verifica si la lista está vacía
+    user(NombreUser, NewUser),
+    getUsuarios(Sistema, Usuarios),
+    member(NewUser, Usuarios),
+    setUsuarioLogeado(Sistema, NewUser, Newsistema).
+
+
+systemLogout(Sistema,Newsistema):-
+    getUsuarioLogeado(Sistema,UsuarioLogeado),
+    \+ UsuarioLogeado = [],
+    setUsuarioLogeado(Sistema,[],Newsistema).
+
+
+systemSwitchDrive(Sistema,Letra,Newsistema):-
+    getUsuarioLogeado(Sistema,UsuarioLogeado),
+    list_to_string(UsuarioLogeado,User),
+    \+ systemLogin(Sistema,User,Newsistema),
+    setDriveActual(Sistema,Letra,Newsistema).
+
+
+
+
+
+
+
+
+
+
+%SELECTORES Y MODIFICADORES
+
 getDrives(Sistema, Drives) :-
-    filesystem(_, Drives, _, Sistema).
+    filesystem(_, Drives, _,_,_,_, Sistema).
 
 setDrives(Sistema, UpdateDrives, Newsistema) :-
-    filesystem(Nombre, _, Usuarios, Sistema),
-    filesystem(Nombre, UpdateDrives, Usuarios, Newsistema).
+    filesystem(Nombre, _, Usuarios,UsuarioLogeado,DriveActual,Papelera, Sistema),
+    filesystem(Nombre, UpdateDrives, Usuarios,UsuarioLogeado,DriveActual,Papelera, Newsistema).
 
 getUsuarios(Sistema, Usuarios) :-
-    filesystem(_, _, Usuarios, Sistema).
+    filesystem(_, _, Usuarios,_,_,_, Sistema).
 
 setUser(Sistema, UpdateUsers, Newsistema) :-
-    filesystem(Nombre, Drives, _, Sistema),
-    filesystem(Nombre, Drives, UpdateUsers, Newsistema).
+    filesystem(Nombre, Drives, _,UsuarioLogeado,DriveActual,Papelera, Sistema),
+    filesystem(Nombre, Drives, UpdateUsers,UsuarioLogeado,DriveActual,Papelera, Newsistema).
+
+getUsuarioLogeado(Sistema, UsuarioLogeado) :-
+    filesystem(_, _, _, UsuarioLogeado, _,_, Sistema).
+
+setUsuarioLogeado(Sistema, UpdateUsuarioLogeado, Newsistema) :-
+    filesystem(Nombre, Drives, Usuarios, _,DriveActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, Usuarios, UpdateUsuarioLogeado,DriveActual, Papelera, Newsistema).
+
+getPapelera(Sistema, Papelera) :-
+    filesystem(_, _, _, _,_, Papelera, Sistema).
+
+setPapelera(Sistema, UpdatePapelera, Newsistema) :-
+    filesystem(Nombre, Drives, Usuarios, UsuarioLogeado,DriveActual, _, Sistema),
+    filesystem(Nombre, Drives, Usuarios, UsuarioLogeado,DriveActual, UpdatePapelera, Newsistema).
+
+setDriveActual(Sistema,DriveActual,Newsistema):-
+    filesystem(Nombre, Drives, Usuarios, UsuarioLogeado,_,Papelera, Sistema),
+    filesystem(Nombre, Drives, Usuarios, UsuarioLogeado,DriveActual, Papelera, Newsistema).
+
+
+
+
+%otras funciones
+
+nombre_Sistema(Nombre,[Nombre,Time]):-
+    get_time(Time).
+
+list_to_string(List, String):-
+    member(String, List).
+
+
+
