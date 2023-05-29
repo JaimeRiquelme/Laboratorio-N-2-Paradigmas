@@ -54,7 +54,9 @@ systemSwitchDrive(Sistema,Letra,Newsistema):-
     getUsuarioLogeado(Sistema,UsuarioLogeado),
     list_to_string(UsuarioLogeado,User),
     \+ systemLogin(Sistema,User,Newsistema),
-    setDriveActual(Sistema,Letra,Newsistema).
+    setDriveActual(Sistema,Letra,NewsistemaDrive),
+    string_concat(Letra,":/",RutaRaiz),
+    setRutaActual(NewsistemaDrive,RutaRaiz,Newsistema).
 
 
 systemMkdir(Sistema,Nombre,Newsistema):-
@@ -63,7 +65,13 @@ systemMkdir(Sistema,Nombre,Newsistema):-
     file(Nombre,UsuarioLogeado,Time,Time,[],Newfile),
     getContenido(Sistema,Contenido),
     addFileToContenido(Newfile,Contenido,NewContenido),
-    setContenido(Sistema,NewContenido,Newsistema).
+    setContenido(Sistema,NewContenido,NewsistemaContenido),
+    getRutaActual(NewsistemaContenido,RutaActual),
+    string_concat(RutaActual,Nombre,RutaFolder),
+    getRutasSistema(NewsistemaContenido,RutasSistema),
+    addRutaToRutas(RutasSistema,RutaFolder,NewRutasSistema),
+    setRutasSistema(NewsistemaContenido,NewRutasSistema,Newsistema).
+    
 
 
 systemCd(Sistema,Nombre,Newsistema):-
@@ -74,13 +82,11 @@ systemCd(Sistema,Nombre,Newsistema):-
     setRutaActual(Sistema,Newruta,Newsistema).
 
 systemCd(Sistema,Nombre,Newsistema):-
-    getRutaActual(Sistema,RutaActual),
-    Nombre = "/" ->string_concat(RutaActual,"/",Ruta1),
-    string_concat(Ruta1,Nombre,Newruta),
-    setRutaActual(Sistema,Newruta,Newsistema).
+    Nombre = "/" -> getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    setRutaActual(Sistema,RutaRaiz,Newsistema).
 
 
-%cd.. utilizado,
 systemCd(Sistema,Nombre,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     Nombre = ".." ->split_string(RutaActual,"/","",Split),
@@ -89,7 +95,6 @@ systemCd(Sistema,Nombre,Newsistema):-
     reverse(ColaPath,Reverse2),
     atomic_list_concat(Reverse2,"/",Newpath),
     setRutaActual(Sistema,Newpath,Newsistema).
-
 
 
 systemCd(Sistema,Nombre,Newsistema):-
@@ -213,6 +218,9 @@ string_downcase(Palabra, PalabraMinuscula) :-
     atom_chars(Palabra, ListaCaracteres),
     maplist(to_minuscula, ListaCaracteres, ListaMinuscula),
     atom_chars(PalabraMinuscula, ListaMinuscula).
+
+addRutaToRutas(Ruta,Rutas,NewRutas):-
+    append(Rutas,[Ruta],NewRutas).
 
 
 

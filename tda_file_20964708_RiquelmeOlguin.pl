@@ -4,3 +4,4 @@ file(Nombre,Creador,Fecha_creacion,Fecha_modificacion,Atributos_seguridad,[Nombr
 
 addFileToContenido(Newfile,Contenido,UpdateContenido):-
     append(Contenido,[Newfile],UpdateContenido).
+
