@@ -1,7 +1,12 @@
-:- module(tda_file_20964708_RiquelmeOlguin, [file/6 , addFileToContenido/3]).
+:- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2]).
 
-file(Nombre,Creador,Fecha_creacion,Fecha_modificacion,Atributos_seguridad,[Nombre,Creador,Fecha_creacion,Fecha_modificacion,Atributos_seguridad]).
+file(Nombre,Contenido,[Nombre,Contenido]).
 
 addFileToContenido(Newfile,Contenido,UpdateContenido):-
     append(Contenido,[Newfile],UpdateContenido).
+
+
+getNombreFile(File, Nombre) :-
+    file(Nombre,_,File).
+
 

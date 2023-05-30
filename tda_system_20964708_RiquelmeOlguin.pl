@@ -6,7 +6,8 @@
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
-:- use_module(tda_file_20964708_RiquelmeOlguin, [file/6 , addFileToContenido/3]).
+:- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/5 , addFolderToContenido/3]).
+:- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2]).
 
 
 filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, [Nombre, Drives, Contenido, RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera]).
@@ -62,29 +63,33 @@ systemSwitchDrive(Sistema,Letra,Newsistema):-
 systemMkdir(Sistema,Nombre,Newsistema):-
     getUsuarioLogeado(Sistema,UsuarioLogeado),
     get_time(Time),
-    file(Nombre,UsuarioLogeado,Time,Time,[],Newfile),
+    folder(Nombre,UsuarioLogeado,Time,Time,Newfile),
     getContenido(Sistema,Contenido),
-    addFileToContenido(Newfile,Contenido,NewContenido),
-    setContenido(Sistema,NewContenido,NewsistemaContenido),
-    getRutaActual(NewsistemaContenido,RutaActual),
-    string_concat(RutaActual,Nombre,RutaFolder),
-    getRutasSistema(NewsistemaContenido,RutasSistema),
-    addRutaToRutas(RutasSistema,RutaFolder,NewRutasSistema),
-    setRutasSistema(NewsistemaContenido,NewRutasSistema,Newsistema).
-    
+    addFolderToContenido(Newfile,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    (RutaActual = RutaRaiz ->
+        string_concat(RutaActual, Nombre, RutaFolder)
+        ;
+        string_concat(RutaActual, "/", TempRuta),
+        string_concat(TempRuta, Nombre, RutaFolder)
+    ),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
 
 
-systemCd(Sistema,Nombre,Newsistema):-
-    getRutaActual(Sistema,RutaActual),
-    RutaActual = [] -> getDriveActual(Sistema,DriveActual),
-    string_concat(DriveActual,":/",Ruta1),
-    string_concat(Ruta1,Nombre,Newruta),
-    setRutaActual(Sistema,Newruta,Newsistema).
+
+
+
+
 
 systemCd(Sistema,Nombre,Newsistema):-
     Nombre = "/" -> getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
-    setRutaActual(Sistema,RutaRaiz,Newsistema).
+    setRutaActual(Sistema,RutaRaiz,Newsistema),!.
 
 
 systemCd(Sistema,Nombre,Newsistema):-
@@ -94,14 +99,50 @@ systemCd(Sistema,Nombre,Newsistema):-
     quitar_cabeza(ReverseSplit,ColaPath),
     reverse(ColaPath,Reverse2),
     atomic_list_concat(Reverse2,"/",Newpath),
-    setRutaActual(Sistema,Newpath,Newsistema).
+    setRutaActual(Sistema,Newpath,Newsistema),!.
+
+systemCd(Sistema, Nombre, Newsistema):-
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    getRutaActual(Sistema,RutaActual),
+    RutaRaiz = RutaActual,
+    string_concat(RutaActual,Nombre,Newruta),
+    setRutaActual(Sistema,Newruta,Newsistema),!.
 
 
 systemCd(Sistema,Nombre,Newsistema):-
+    \+ Nombre = "..",
+    \+ Nombre = "/",
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,"/",Ruta1),
     string_concat(Ruta1,Nombre,Newruta),
-    setRutaActual(Sistema,Newruta,Newsistema).
+    setRutaActual(Sistema,Newruta,Newsistema),!.
+
+
+systemAddFile(Sistema,File,Newsistema):-
+    getContenido(Sistema,Contenido),
+    addFileToContenido(File,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual, ":/",RutaRaiz),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getNombreFile(File,Nombre),
+    (RutaActual = RutaRaiz ->
+        string_concat(RutaActual, Nombre, RutaFolder)
+        ;
+        string_concat(RutaActual, "/", TempRuta),
+        string_concat(TempRuta, Nombre, RutaFolder)
+    ),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+
+
+
+
+
+
+
 
 
 
@@ -197,6 +238,8 @@ nombre_Sistema(Nombre,[Nombre,Time]):-
 list_to_string(List, String):-
     member(String, List).
 
+string_a_lista(String,[String]).
+
 
 quitar_cabeza([], []).
 quitar_cabeza([_|Cola], Cola).
@@ -221,6 +264,16 @@ string_downcase(Palabra, PalabraMinuscula) :-
 
 addRutaToRutas(Ruta,Rutas,NewRutas):-
     append(Rutas,[Ruta],NewRutas).
+
+
+pertenece(Ruta, Rutas) :-
+    atom_string(AtomRuta, Ruta),     % Convertir la ruta dada a un átomo
+    member(RutaLista, Rutas),        % Para cada sublista en la lista de rutas...
+    atomic_list_concat(RutaLista, '/', AtomRutaLista), % ... combinar sus elementos en un átomo
+    AtomRutaLista = AtomRuta.        % ... y comprobar si ese átomo coincide con el dado
+
+
+
 
 
 
