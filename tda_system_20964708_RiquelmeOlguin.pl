@@ -27,14 +27,18 @@ systemAddDrive(Sistema, Letra, Nombre, Capacidad, Newsistema) :-
 systemRegister(Sistema, NombreUser, Sistema) :-
     getUsuarios(Sistema, Usuarios),
     user(NombreUser,NewUser),
-    member(NewUser, Usuarios).
+    member(NewUser, Usuarios), !.
 
 systemRegister(Sistema, NombreUser, Newsistema) :-
     user(NombreUser, NewUser),
+    string_a_lista(NewUser,UserList),
     getUsuarios(Sistema, Usuarios),
-    \+ member(NewUser, Usuarios),
+    \+ member(UserList, Usuarios), % Verifica que el usuario no está presente en Usuarios
     addUserToUsers(NewUser, Usuarios, UpdateUsers),
     setUser(Sistema, UpdateUsers, Newsistema).
+
+
+
 
 systemLogin(Sistema, NombreUser, Newsistema) :-
     getUsuarioLogeado(Sistema, UsuarioLogeado),
@@ -55,6 +59,8 @@ systemSwitchDrive(Sistema,Letra,Newsistema):-
     getUsuarioLogeado(Sistema,UsuarioLogeado),
     list_to_string(UsuarioLogeado,User),
     \+ systemLogin(Sistema,User,Newsistema),
+    getDrives(Sistema,Drives),
+    member([Letra, _, _], Drives),
     setDriveActual(Sistema,Letra,NewsistemaDrive),
     string_concat(Letra,":/",RutaRaiz),
     setRutaActual(NewsistemaDrive,RutaRaiz,Newsistema).
@@ -70,12 +76,25 @@ systemMkdir(Sistema,Nombre,Newsistema):-
     getRutaActual(NewSistemaContenido,RutaActual),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
-    (RutaActual = RutaRaiz ->
-        string_concat(RutaActual, Nombre, RutaFolder)
-        ;
-        string_concat(RutaActual, "/", TempRuta),
-        string_concat(TempRuta, Nombre, RutaFolder)
-    ),
+    RutaActual = RutaRaiz,
+    string_concat(RutaActual, Nombre, RutaFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
+systemMkdir(Sistema,Nombre,Newsistema):-
+    getUsuarioLogeado(Sistema,UsuarioLogeado),
+    get_time(Time),
+    folder(Nombre,UsuarioLogeado,Time,Time,Newfile),
+    getContenido(Sistema,Contenido),
+    addFolderToContenido(Newfile,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaActual \= RutaRaiz,
+    string_concat(RutaActual, "/", TempRuta),
+    string_concat(TempRuta, Nombre, RutaFolder),
     getRutasSistema(NewSistemaContenido,RutasSistema),
     addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
@@ -86,15 +105,18 @@ systemMkdir(Sistema,Nombre,Newsistema):-
 
 
 
+
 systemCd(Sistema,Nombre,Newsistema):-
-    Nombre = "/" -> getDriveActual(Sistema,DriveActual),
+    Nombre = "/",
+    getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
     setRutaActual(Sistema,RutaRaiz,Newsistema),!.
 
 
 systemCd(Sistema,Nombre,Newsistema):-
     getRutaActual(Sistema,RutaActual),
-    Nombre = ".." ->split_string(RutaActual,"/","",Split),
+    Nombre = "..",
+    split_string(RutaActual,"/","",Split),
     reverse(Split,ReverseSplit),
     quitar_cabeza(ReverseSplit,ColaPath),
     reverse(ColaPath,Reverse2),
@@ -113,13 +135,23 @@ systemCd(Sistema, Nombre, Newsistema):-
 systemCd(Sistema,Nombre,Newsistema):-
     \+ Nombre = "..",
     \+ Nombre = "/",
+    sub_atom(Nombre, 0, 1, _, '/'),
+    getRutaActual(Sistema,RutaActual),
+    string_concat(RutaActual,Nombre,Newruta),
+    setRutaActual(Sistema,Newruta,Newsistema),!.
+
+systemCd(Sistema,Nombre,Newsistema):-
+    \+ Nombre = "..",
+    \+ Nombre = "/",
+    \+ sub_atom(Nombre, 0, 1, _, '/'),
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,"/",Ruta1),
     string_concat(Ruta1,Nombre,Newruta),
     setRutaActual(Sistema,Newruta,Newsistema),!.
 
 
-systemAddFile(Sistema,File,Newsistema):-
+
+systemAddFile(Sistema, File, Newsistema):-
     getContenido(Sistema,Contenido),
     addFileToContenido(File,Contenido,NewContenido),
     setContenido(Sistema,NewContenido,NewSistemaContenido),
@@ -127,15 +159,39 @@ systemAddFile(Sistema,File,Newsistema):-
     string_concat(DriveActual, ":/",RutaRaiz),
     getRutaActual(NewSistemaContenido,RutaActual),
     getNombreFile(File,Nombre),
-    (RutaActual = RutaRaiz ->
-        string_concat(RutaActual, Nombre, RutaFolder)
-        ;
-        string_concat(RutaActual, "/", TempRuta),
-        string_concat(TempRuta, Nombre, RutaFolder)
-    ),
+    RutaActual = RutaRaiz,
+    string_concat(RutaActual, Nombre, RutaFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
+systemAddFile(Sistema, File, Newsistema):-
+    getContenido(Sistema,Contenido),
+    addFileToContenido(File,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual, ":/",RutaRaiz),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getNombreFile(File,Nombre),
+    RutaActual \= RutaRaiz,
+    string_concat(RutaActual, "/", TempRuta),
+    string_concat(TempRuta, Nombre, RutaFolder),
     getRutasSistema(NewSistemaContenido,RutasSistema),
     addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+
+
+systemDel(Sistema,NombreEliminar,Newsistema):-
+    getRutaActual(Sistema,RutaActual),
+    string_concat(RutaActual,"/",RutaAux),
+    string_concat(RutaAux,NombreEliminar,RutaEliminar),
+    getRutasSistema(Sistema,RutasSistema),
+    member(RutaEliminar,RutasSistema),
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(NombreEliminar,Contenido,ContenidoFolder),
+    setPapelera(Sistema,ContenidoFolder,NewsistemaPapelera),
+    eliminar_carpeta(NombreEliminar,Contenido,NewContenido),
+    setContenido(NewsistemaPapelera,NewContenido,Newsistema).
 
 
 
@@ -230,6 +286,10 @@ setRutaActual(Sistema, UpdateRutaActual, Newsistema) :-
 
 
 
+
+
+
+
 %otras funciones
 
 nombre_Sistema(Nombre,[Nombre,Time]):-
@@ -277,3 +337,25 @@ pertenece(Ruta, Rutas) :-
 
 
 
+eliminar_carpeta(Nombre, ListaEntrada, ListaSalida) :-
+    eliminar_carpeta_aux(Nombre, ListaEntrada, [], ListaSalida).
+
+eliminar_carpeta_aux(_, [], Acumulador, Acumulador).
+eliminar_carpeta_aux(Nombre, [[Nombre|_]|Cola], Acumulador, ListaSalida) :-
+    eliminar_carpeta_aux(Nombre, Cola, Acumulador, ListaSalida).
+eliminar_carpeta_aux(Nombre, [Cabeza|Cola], Acumulador, ListaSalida) :-
+    Cabeza \= [Nombre|_],
+    append(Acumulador, [Cabeza], NuevoAcumulador),
+    eliminar_carpeta_aux(Nombre, Cola, NuevoAcumulador, ListaSalida).
+
+
+
+
+getContenidoFolder(Nombre, ListaFolders, FileEncontrado) :-
+    getContenidoFolder_aux(Nombre, ListaFolders, FileEncontrado).
+
+getContenidoFolder_aux(_, [], []).
+getContenidoFolder_aux(Nombre, [[Nombre|Resto]|_], [Nombre|Resto]).
+getContenidoFolder_aux(Nombre, [Cabeza|Cola], FileEncontrado) :-
+    Cabeza \= [Nombre|_],
+    getContenidoFolder_aux(Nombre, Cola, FileEncontrado).
