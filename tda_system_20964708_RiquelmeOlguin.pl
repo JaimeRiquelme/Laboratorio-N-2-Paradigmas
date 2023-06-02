@@ -2,7 +2,8 @@
                                                system/2,
                                                systemAddDrive/5,
                                                systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3, systemLogin/3,
-                                               systemLogout/2,systemSwitchDrive/3 ,systemMkdir/3]).
+                                               systemLogout/2,systemSwitchDrive/3 ,systemMkdir/3, systemCd/3,systemAddFile/3,
+                                               systemDel/3]).
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
