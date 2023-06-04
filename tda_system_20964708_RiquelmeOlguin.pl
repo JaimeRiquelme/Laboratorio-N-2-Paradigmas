@@ -225,11 +225,13 @@ systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
 
 systemMove(Sistema,NombreMover,RutaDestino,Newsistema):-
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(NombreMover,Contenido,ContenidoFolder),
     systemCopy(Sistema,NombreMover,RutaDestino,SistemaAux),
     systemDel(SistemaAux,NombreMover,NewsistemaAux),
-    getContenido(NewsistemaAux,Contenido),
-    getContenidoFolder(NombreMover,Contenido,ContenidoFolder),
-    getRutaFolder(ContenidoFolder,RutaFolder),
+    getRutaFolder(ContenidoFolder,RutaFolderAux),
+    string_concat(RutaFolderAux,"/",RutaAux),
+    string_concat(RutaAux,NombreMover,RutaFolder),
     getRutasSistema(NewsistemaAux,RutasSistema),
     select(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewsistemaAux,NewRutasSistema,Newsistema).
