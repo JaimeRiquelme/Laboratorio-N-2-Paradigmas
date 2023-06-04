@@ -7,7 +7,8 @@
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
-:- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3, getRutaFolder/2]).
+:- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3, getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
+                        getFechaModificacionFolder/2]).
 :- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2]).
 
 
@@ -235,6 +236,55 @@ systemMove(Sistema,NombreMover,RutaDestino,Newsistema):-
     getRutasSistema(NewsistemaAux,RutasSistema),
     select(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewsistemaAux,NewRutasSistema,Newsistema).
+
+
+systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(Nombre,Contenido,ContenidoFolder),
+    setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
+    systemDel2(Sistema,Nombre,NewsistemaAux),
+    getContenido(NewsistemaAux,ContenidoAux),
+    addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
+    setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
+    getRutaFolder(NewFolder,RutaFolder),
+    string_concat(RutaFolder,Nombre,RutaFolderEliminar),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaFolder \= RutaRaiz,
+    string_concat(RutaFolder,"/",RutaAux),
+    string_concat(RutaAux,NuevoNombre,RutaNewFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
+    \+member(RutaNewFolder,RutasSistema),
+    addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+
+systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(Nombre,Contenido,ContenidoFolder),
+    setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
+    systemDel2(Sistema,Nombre,NewsistemaAux),
+    getContenido(NewsistemaAux,ContenidoAux),
+    addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
+    setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
+    getRutaFolder(NewFolder,RutaFolder),
+    string_concat(RutaFolder,Nombre,RutaFolderEliminar),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaFolder = RutaRaiz,
+    string_concat(RutaFolder,NuevoNombre,RutaNewFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
+    \+member(RutaNewFolder,RutasSistema),
+    addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+
+
+
+
+
+
+    
     
 
 
@@ -411,3 +461,39 @@ getContenidoFolder_aux(Nombre, [[Nombre|Resto]|_], [Nombre|Resto]).
 getContenidoFolder_aux(Nombre, [Cabeza|Cola], FileEncontrado) :-
     Cabeza \= [Nombre|_],
     getContenidoFolder_aux(Nombre, Cola, FileEncontrado).
+
+
+% Predicado para convertir un átomo a una cadena de caracteres
+atom_to_string(Atom, String) :-
+    atom_chars(Atom, CharList),
+    string_chars(String, CharList).
+
+
+systemDel2(Sistema,NombreEliminar,Newsistema):-
+    getRutaActual(Sistema,RutaActual),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaActual = RutaRaiz,
+    string_concat(RutaActual,NombreEliminar,RutaEliminar),
+    getRutasSistema(Sistema,RutasSistema),
+    member(RutaEliminar,RutasSistema),
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(NombreEliminar,Contenido,ContenidoFolder),
+    getRutaFolder(ContenidoFolder,RutaFolder),
+    eliminar_carpeta(NombreEliminar,RutaFolder,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,Newsistema).
+
+systemDel2(Sistema,NombreEliminar,Newsistema):-
+    getRutaActual(Sistema,RutaActual),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaActual \= RutaRaiz,
+    string_concat(RutaActual,"/",RutaAux),
+    string_concat(RutaAux,NombreEliminar,RutaEliminar),
+    getRutasSistema(Sistema,RutasSistema),
+    member(RutaEliminar,RutasSistema),
+    getContenido(Sistema,Contenido),
+    getContenidoFolder(NombreEliminar,Contenido,ContenidoFolder),
+    getRutaFolder(ContenidoFolder,RutaFolder),
+    eliminar_carpeta(NombreEliminar,RutaFolder,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,Newsistema).

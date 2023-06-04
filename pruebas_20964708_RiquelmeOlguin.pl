@@ -7,7 +7,8 @@
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
-:- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3,getRutaFolder/2]).
+:- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3,getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
+                        getFechaModificacionFolder/2]).
 :- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2]).
 
 
@@ -40,7 +41,7 @@
     systemCd(S13, "/folder2�, S14),
     file( "ejemplo.txt", "otro archivo", F2),
     systemAddFile(S14, F2, S15).
-    
+
 */
 
 
@@ -52,5 +53,6 @@
 %system("newSystem", S1), systemRegister(S1, "user1", S2), systemRegister(S2, "user2", S3), systemLogin(S3, "user1", S4), systemLogin(S4, "user2", S5).
 
 % si se intenta usar una unidad inexistente
-%system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1", S3), systemSwitchDrive(S3, "K", S4).
+% system ("newSystem", S1), systemRegister(S1, "user1", S2),
+% systemLogin(S2, "user1", S3), systemSwitchDrive(S3, "K", S4).
 
