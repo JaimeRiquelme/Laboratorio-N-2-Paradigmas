@@ -1,4 +1,4 @@
-:- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2]).
+:- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2, getContenidoFile/2]).
 
 file(Nombre,Contenido,[Nombre,Contenido]).
 
@@ -16,8 +16,22 @@ addFileToContenido(File, [Cabeza|Cola], [Cabeza|NuevoContenido]) :-
     addFileToContenido(File, Cola, NuevoContenido).
 
 
+% SELECTORES
 
 getNombreFile(File, Nombre) :-
-    file(Nombre,_,File).
+    file(Nombre, _, File).
+
+getContenidoFile(File, Contenido) :-
+    file(_, Contenido, File).
+
+% MODIFICADORES
+
+setNombreFile(File, UpdateNombre, NewFile) :-
+    file(_, Contenido, File),
+    file(UpdateNombre, Contenido, NewFile).
+
+setContenidoFile(File, UpdateContenido, NewFile) :-
+    file(Nombre, _, File),
+    file(Nombre, UpdateContenido, NewFile).
 
 
