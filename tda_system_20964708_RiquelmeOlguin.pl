@@ -293,7 +293,7 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
     \+member(RutaNewFolder,RutasSistema),
     addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
-    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema). 
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).  
 
 
 
