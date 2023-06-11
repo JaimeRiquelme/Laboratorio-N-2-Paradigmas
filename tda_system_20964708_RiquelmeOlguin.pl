@@ -9,16 +9,31 @@
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
 :- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3, getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
                         getFechaModificacionFolder/2]).
-:- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2 , getContenidoFile/2]).
+:- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2 , getContenidoFile/2 , setNombreFile/3]).
 
+
+
+% -----------------------Constructor Y Pertenencia---------------------------
 
 filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, [Nombre, Drives, Contenido, RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera]).
 
+
+
+% -----------------------Requerimientos Funcionales----------------------------
+% Descripcion: Predicado que crea un sistema vacío con un nombre específico.
+% Dominio: NombreSistema X Sistema
+% Metas Primarias: system
+% Metas Secundarias: string, nombre_Sistema, filesystem
 system(NombreSistema, Sistema) :-
     string(NombreSistema),
-    nombre_Sistema(NombreSistema,Nombre),
-    filesystem(Nombre, [],[],[],[],[],[],[],[], Sistema).
+    nombre_Sistema(NombreSistema, Nombre),
+    filesystem(Nombre, [], [], [], [], [], [], [], [], Sistema),!.
 
+
+% Descripcion: Predicado que agrega un nuevo drive a un sistema.
+% Dominio: Sistema X Letra X Nombre X Capacidad X NewSistema
+% Metas Primarias: systemAddDrive
+% Metas Secundarias: string, string_length, drive, getDrives, member, addDriveToDrives, setDrives
 systemAddDrive(Sistema, Letra, Nombre, Capacidad, Newsistema) :-
     string(Nombre),
     string_length(Letra, 1),  % Asegura que Letra tiene un solo carácter
@@ -26,23 +41,33 @@ systemAddDrive(Sistema, Letra, Nombre, Capacidad, Newsistema) :-
     getDrives(Sistema, Drives),
     \+ member([Letra, _, _], Drives),  % Verifica que la letra no esté presente en Drives
     addDriveToDrives(NewDrive, Drives, UpdateDrives),
-    setDrives(Sistema, UpdateDrives, Newsistema).
+    setDrives(Sistema, UpdateDrives, Newsistema),!.
 
 
+
+% Descripcion: Predicado que registra un usuario en un sistema existente.
+% Dominio: Sistema X NombreUser X Sistema
+% Metas Primarias: systemRegister
+% Metas Secundarias: string, getUsuarios, user, member
 systemRegister(Sistema, NombreUser, Sistema) :-
     string(NombreUser),
     getUsuarios(Sistema, Usuarios),
-    user(NombreUser,NewUser),
+    user(NombreUser, NewUser),
     member(NewUser, Usuarios), !.
 
+% Descripcion: Predicado que registra un nuevo usuario en un sistema.
+% Dominio: Sistema X NombreUser X NewSistema
+% Metas Primarias: systemRegister
+% Metas Secundarias: string, user, string_a_lista, getUsuarios, member, addUserToUsers, setUser
 systemRegister(Sistema, NombreUser, Newsistema) :-
     string(NombreUser),
     user(NombreUser, NewUser),
-    string_a_lista(NewUser,UserList),
+    string_a_lista(NewUser, UserList),
     getUsuarios(Sistema, Usuarios),
     \+ member(UserList, Usuarios), % Verifica que el usuario no está presente en Usuarios
     addUserToUsers(NewUser, Usuarios, UpdateUsers),
     setUser(Sistema, UpdateUsers, Newsistema).
+
 
 
 
@@ -190,45 +215,6 @@ systemCd(Sistema,Nombre,Newsistema):-
     setRutaActual(Sistema,Newruta,Newsistema),!.
 
 
-
-
-
-
-
-systemAddFile(Sistema, File, Newsistema):-
-    getContenido(Sistema,Contenido),
-    addFileToContenido(File,Contenido,NewContenido),
-    setContenido(Sistema,NewContenido,NewSistemaContenido),
-    getDriveActual(Sistema,DriveActual),
-    string_concat(DriveActual, ":/",RutaRaiz),
-    getRutaActual(NewSistemaContenido,RutaActual),
-    getNombreFile(File,Nombre),
-    RutaActual = RutaRaiz,
-    string_concat(RutaActual, Nombre, RutaFile),
-    getRutasSistema(NewSistemaContenido,RutasSistema),
-    member(RutaFile,RutasSistema),
-    getNombreFile(File,NombreFile),
-    systemDelDos(Sistema,NombreFile,Newsistema).!.
-
-
-systemAddFile(Sistema, File, Newsistema):-
-    getContenido(Sistema,Contenido),
-    addFileToContenido(File,Contenido,NewContenido),
-    setContenido(Sistema,NewContenido,NewSistemaContenido),
-    getDriveActual(Sistema,DriveActual),
-    string_concat(DriveActual, ":/",RutaRaiz),
-    getRutaActual(NewSistemaContenido,RutaActual),
-    getNombreFile(File,Nombre),
-    RutaActual \= RutaRaiz,
-    string_concat(RutaActual, "/", TempRuta),
-    string_concat(TempRuta, Nombre, RutaFile),
-    getRutasSistema(NewSistemaContenido,RutasSistema),
-    member(RutaFile,RutasSistema),
-    addRutaToRutas(RutaFile,RutasSistema,NewRutasSistema),
-    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
-
-
-
 systemAddFile(Sistema, File, Newsistema):-
     getContenido(Sistema,Contenido),
     addFileToContenido(File,Contenido,NewContenido),
@@ -310,6 +296,9 @@ systemDel(Sistema,NombreEliminar,Newsistema):-
 
 
 systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
+    split_string(NombreCopiar,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 1,
     getContenido(Sistema,Contenido),
     getContenidoFF(NombreCopiar,Contenido,FolderCopy),
     setRutaFolder(FolderCopy,RutaDestino,NewFolderCopy),
@@ -321,11 +310,27 @@ systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
     addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
 
+systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
+    split_string(NombreCopiar,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 2,
+    getContenido(Sistema,Contenido),
+    getContenidoFF(NombreCopiar,Contenido,FileCopy),
+    addFolderToContenido(FileCopy,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    string_concat(RutaDestino, NombreCopiar, RutaFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    \+member(RutaFolder,RutasSistema),
+    addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
 systemMove(Sistema,NombreMover,RutaDestino,Newsistema):-
+    string(NombreMover),
+    string(RutaDestino),
     getContenido(Sistema,Contenido),
     getContenidoFF(NombreMover,Contenido,ContenidoFolder),
     systemCopy(Sistema,NombreMover,RutaDestino,SistemaAux),
-    systemDel(SistemaAux,NombreMover,NewsistemaAux),
+    systemDelDos(SistemaAux,NombreMover,NewsistemaAux),
     getRutaFolder(ContenidoFolder,RutaFolderAux),
     string_concat(RutaFolderAux,"/",RutaAux),
     string_concat(RutaAux,NombreMover,RutaFolder),
@@ -335,6 +340,9 @@ systemMove(Sistema,NombreMover,RutaDestino,Newsistema):-
 
 
 systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    split_string(Nombre,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 1,
     getContenido(Sistema,Contenido),
     getContenidoFF(Nombre,Contenido,ContenidoFolder),
     setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
@@ -343,19 +351,22 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
     setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
     getRutaFolder(NewFolder,RutaFolder),
-    string_concat(RutaFolder,Nombre,RutaFolderEliminar),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
     RutaFolder \= RutaRaiz,
     string_concat(RutaFolder,"/",RutaAux),
     string_concat(RutaAux,NuevoNombre,RutaNewFolder),
+    string_concat(RutaFolder,"/",RutaEliminarAux),
+    string_concat(RutaEliminarAux,Nombre,RutaEliminar),
     getRutasSistema(NewSistemaContenido,RutasSistema),
-    select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
-    \+member(RutaNewFolder,RutasSistema),
+    select(RutaEliminar,RutasSistema,NewRutasSistemaAux),
     addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
-    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
 
 systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    split_string(Nombre,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 1,
     getContenido(Sistema,Contenido),
     getContenidoFF(Nombre,Contenido,ContenidoFolder),
     setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
@@ -373,7 +384,50 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
     \+member(RutaNewFolder,RutasSistema),
     addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
-    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).   
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
+
+systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    split_string(Nombre,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 2,
+    getContenido(Sistema,Contenido),
+    getContenidoFF(Nombre,Contenido,ContenidoFile),
+    setNombreFile(ContenidoFile,NuevoNombre,NewFile),
+    systemDelDos(Sistema,Nombre,NewsistemaAux),
+    getContenido(NewsistemaAux,ContenidoAux),
+    addFileToContenido(NewFile,ContenidoAux,NewContenidoAux),
+    setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    string_concat(RutaActual,Nombre,RutaEliminar),
+    string_concat(RutaActual,NuevoNombre,Newruta),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    select(RutaEliminar,RutasSistema,NewRutasSistemaAux),
+    addRutaToRutas(Newruta,NewRutasSistemaAux,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
+/*systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
+    split_string(Nombre,".","",Split),
+    length(Split,LargoLista),
+    LargoLista = 2,
+    getContenido(Sistema,Contenido),
+    getContenidoFF(Nombre,Contenido,ContenidoFolder),
+    setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
+    systemDelDos(Sistema,Nombre,NewsistemaAux),
+    getContenido(NewsistemaAux,ContenidoAux),
+    addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
+    setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
+    getRutaFolder(NewFolder,RutaFolder),
+    string_concat(RutaFolder,Nombre,RutaFolderEliminar),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaFolder = RutaRaiz,
+    string_concat(RutaFolder,NuevoNombre,RutaNewFolder),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    select(RutaFolderEliminar,RutasSistema,NewRutasSistemaAux),
+    \+member(RutaNewFolder,RutasSistema),
+    addRutaToRutas(RutaNewFolder,NewRutasSistemaAux,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.*/
 
 
 
@@ -381,8 +435,6 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
 
 
 
-    
-    
 
 
 
@@ -409,70 +461,153 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
 
 
 
-%SELECTORES Y MODIFICADORES
 
+
+
+
+%MODIFICADORES
+
+% Descripcion: Predicado que actualiza los drives de un sistema
+% Dominio: Sistema X UpdateDrives X NewSistema
+% Metas Primarias: setDrives
+% Metas Secundarias: filesystem
+setDrives(Sistema, UpdateDrives, Newsistema) :-
+    filesystem(Nombre, _, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, UpdateDrives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza los usuarios de un sistema
+% Dominio: Sistema X UpdateUsers X NewSistema
+% Metas Primarias: setUser
+% Metas Secundarias: filesystem
+setUser(Sistema, UpdateUsers, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, RutasSistema, _, UsuarioLogeado, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, Contenido, RutasSistema, UpdateUsers, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza el usuario logeado en un sistema
+% Dominio: Sistema X UpdateUsuarioLogeado X NewSistema
+% Metas Primarias: setUsuarioLogeado
+% Metas Secundarias: filesystem
+setUsuarioLogeado(Sistema, UpdateUsuarioLogeado, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, _, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UpdateUsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza la papelera de un sistema
+% Dominio: Sistema X UpdatePapelera X NewSistema
+% Metas Primarias: setPapelera
+% Metas Secundarias: filesystem
+setPapelera(Sistema, UpdatePapelera, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, _, Sistema),
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, UpdatePapelera, Newsistema).
+
+% Descripcion: Predicado que actualiza el drive actual de un sistema
+% Dominio: Sistema X UpdateDriveActual X NewSistema
+% Metas Primarias: setDriveActual
+% Metas Secundarias: filesystem
+setDriveActual(Sistema, DriveActual, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, _, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza el nombre de un sistema
+% Dominio: Sistema X UpdateNombre X NewSistema
+% Metas Primarias: setNombre
+% Metas Secundarias: filesystem
+setNombre(Sistema, UpdateNombre, Newsistema) :-
+    filesystem(_, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(UpdateNombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza las rutas del sistema
+% Dominio: Sistema X UpdateRutasSistema X NewSistema
+% Metas Primarias: setRutasSistema
+% Metas Secundarias: filesystem
+setRutasSistema(Sistema, UpdateRutasSistema, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, _, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, Contenido, UpdateRutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza el contenido de un sistema
+% Dominio: Sistema X UpdateContenido X NewSistema
+% Metas Primarias: setContenido
+% Metas Secundarias: filesystem
+setContenido(Sistema, UpdateContenido, Newsistema) :-
+    filesystem(Nombre, Drives, _, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Sistema),
+    filesystem(Nombre, Drives, UpdateContenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, RutaActual, Papelera, Newsistema).
+
+% Descripcion: Predicado que actualiza la ruta actual de un sistema
+% Dominio: Sistema X UpdateRutaActual X NewSistema
+% Metas Primarias: setRutaActual
+% Metas Secundarias: filesystem
+setRutaActual(Sistema, UpdateRutaActual, Newsistema) :-
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, _, Papelera, Sistema),
+    filesystem(Nombre, Drives, Contenido, RutasSistema, Usuarios, UsuarioLogeado, DriveActual, UpdateRutaActual, Papelera, Newsistema).
+
+
+
+%SELECTORES
+
+
+% Descripcion: Predicado que obtiene los drives de un sistema
+% Dominio: Sistema X Drives
+% Metas Primarias: getDrives
+% Metas Secundarias : filesystem
 getDrives(Sistema, Drives) :-
     filesystem(_, Drives, _,_,_,_,_,_,_, Sistema).
 
-setDrives(Sistema, UpdateDrives, Newsistema) :-
-    filesystem(Nombre, _,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Sistema),
-    filesystem(Nombre, UpdateDrives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene los usuarios de un sistema
+% Dominio: Sistema X Usuarios
+% Metas Primarias: getUsuarios
+% Metas Secundarias: filesystem
 getUsuarios(Sistema, Usuarios) :-
-    filesystem(_, _,_,_, Usuarios,_,_,_,_, Sistema).
+    filesystem(_, _, _, _, Usuarios, _, _, _, _, Sistema).
 
-setUser(Sistema, UpdateUsers, Newsistema) :-
-    filesystem(Nombre, Drives,Contenido,RutasSistema, _,UsuarioLogeado,DriveActual,RutaActual,Papelera, Sistema),
-    filesystem(Nombre, Drives,Contenido,RutasSistema, UpdateUsers,UsuarioLogeado,DriveActual,RutaActual,Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene el usuario logeado en un sistema
+% Dominio: Sistema X UsuarioLogeado
+% Metas Primarias: getUsuarioLogeado
+% Metas Secundarias: filesystem
 getUsuarioLogeado(Sistema, UsuarioLogeado) :-
-    filesystem(_, _, _,_,_, UsuarioLogeado, _,_,_, Sistema).
+    filesystem(_, _, _, _, _, UsuarioLogeado, _, _, _, Sistema).
 
-setUsuarioLogeado(Sistema, UpdateUsuarioLogeado, Newsistema) :-
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, _,DriveActual, RutaActual,Papelera, Sistema),
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, UpdateUsuarioLogeado,DriveActual,RutaActual, Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene la papelera de un sistema
+% Dominio: Sistema X Papelera
+% Metas Primarias: getPapelera
+% Metas Secundarias: filesystem
 getPapelera(Sistema, Papelera) :-
-    filesystem(_, _, _, _,_,_, Papelera, Sistema).
+    filesystem(_, _, _, _, _, _, Papelera, Sistema).
 
-setPapelera(Sistema, UpdatePapelera, Newsistema) :-
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, UsuarioLogeado,DriveActual,RutaActual, _, Sistema),
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, UsuarioLogeado,DriveActual,RutaActual, UpdatePapelera, Newsistema).
-
-setDriveActual(Sistema,DriveActual,Newsistema):-
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, UsuarioLogeado,_,RutaActual,Papelera, Sistema),
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios, UsuarioLogeado,DriveActual,RutaActual, Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene el nombre de un sistema
+% Dominio: Sistema X Nombre
+% Metas Primarias: getNombre
+% Metas Secundarias: filesystem
 getNombre(Sistema, Nombre) :-
-    filesystem(Nombre, _, _,_,_,_,_,_,_, Sistema).
+    filesystem(Nombre, _, _, _, _, _, _, _, _, Sistema).
 
-setNombre(Sistema, UpdateNombre, Newsistema) :-
-    filesystem(_, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Sistema),
-    filesystem(UpdateNombre, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene el contenido de un sistema
+% Dominio: Sistema X Contenido
+% Metas Primarias: getContenido
+% Metas Secundarias: filesystem
 getContenido(Sistema, Contenido) :-
-    filesystem(_, _, Contenido,_,_,_,_,_,_, Sistema).
+    filesystem(_, _, Contenido, _, _, _, _, _, _, Sistema).
 
-setContenido(Sistema, UpdateContenido, Newsistema) :-
-    filesystem(Nombre, Drives,_,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Sistema),
-    filesystem(Nombre, Drives,UpdateContenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene las rutas del sistema
+% Dominio: Sistema X RutasSistema
+% Metas Primarias: getRutasSistema
+% Metas Secundarias: filesystem
 getRutasSistema(Sistema, RutasSistema) :-
-    filesystem(_, _, _, RutasSistema,_,_,_,_,_, Sistema).
+    filesystem(_, _, _, RutasSistema, _, _, _, _, _, Sistema).
 
-setRutasSistema(Sistema, UpdateRutasSistema, Newsistema) :-
-    filesystem(Nombre, Drives,Contenido,_, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Sistema),
-    filesystem(Nombre, Drives,Contenido,UpdateRutasSistema, Usuarios,UsuarioLogeado,DriveActual,RutaActual,Papelera, Newsistema).
-
+% Descripcion: Predicado que obtiene el drive actual de un sistema
+% Dominio: Sistema X DriveActual
+% Metas Primarias: getDriveActual
+% Metas Secundarias: filesystem
 getDriveActual(Sistema, DriveActual) :-
-    filesystem(_, _, _,_,_,_, DriveActual, _,_, Sistema).
+    filesystem(_, _, _, _, _, _, DriveActual, _, _, Sistema).
 
+% Descripcion: Predicado que obtiene la ruta actual de un sistema
+% Dominio: Sistema X RutaActual
+% Metas Primarias: getRutaActual
+% Metas Secundarias: filesystem
 getRutaActual(Sistema, RutaActual) :-
-    filesystem(_, _, _,_,_,_,_, RutaActual,_, Sistema).
+    filesystem(_, _, _, _, _, _, _, RutaActual, _, Sistema).
 
-setRutaActual(Sistema, UpdateRutaActual, Newsistema) :-
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,_,Papelera, Sistema),
-    filesystem(Nombre, Drives,Contenido,RutasSistema, Usuarios,UsuarioLogeado,DriveActual,UpdateRutaActual,Papelera, Newsistema).
+
 
 
 
@@ -609,4 +744,17 @@ systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getContenidoFF(NombreEliminar,Contenido,ContenidoFolder),
     getRutaFolder(ContenidoFolder,RutaFolder),
     eliminar_carpeta(NombreEliminar,RutaFolder,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,Newsistema).
+
+
+systemDelDos(Sistema,NombreEliminar,Newsistema):-
+    getRutaActual(Sistema,RutaActual),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    RutaActual = RutaRaiz,
+    string_concat(RutaActual,NombreEliminar,RutaEliminar),
+    getRutasSistema(Sistema,RutasSistema),
+    member(RutaEliminar,RutasSistema),
+    getContenido(Sistema,Contenido),
+    eliminar_file(NombreEliminar,Contenido,NewContenido),
     setContenido(Sistema,NewContenido,Newsistema).

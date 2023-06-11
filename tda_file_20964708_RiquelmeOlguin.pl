@@ -1,4 +1,4 @@
-:- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2, getContenidoFile/2]).
+:- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2, getContenidoFile/2 , setNombreFile/3]).
 
 file(Nombre,Contenido,[Nombre,Contenido]):-
     string(Nombre).

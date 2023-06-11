@@ -9,7 +9,7 @@
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
 :- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3,getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
                         getFechaModificacionFolder/2]).
-:- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2 , getContenidoFile/2]).
+:- use_module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2 , getContenidoFile/2 , setNombreFile/3]).
 
 
 
@@ -61,7 +61,7 @@ system("newSystem", S1),
     Scrip para systemRegister
     system("newSystem", S1), systemRegister(S1, 123, S2). % Se intenta registrar un usuario con nombre numérico, debe fallar
     system("newSystem", S1), systemRegister(S1, "Usuario1", S2), systemRegister(S1, "Usuario1", S3). % Se intenta registrar el mismo usuario dos veces, por lo cual S2 = S3
-    system("newSystem", S1), systemRegister(S1, "Usuario1", S2), systemRegister(S2, "Usuario2", S3). % Se registran dos usuarios distintos correctamente
+    system("newSystem", S1), systemRegister(S1, usuario , S2), systemRegister(S2, "Usuario2", S3). % Se intenta registrar un usuario ingresando un atomo por nombre.
 
     Scrip para systemLogin
     system("newSystem", S1), systemRegister(S1, "Usuario1", S2), systemLogin(S2, "Usuario2", S3). % Intenta iniciar sesión con un usuario no registrado, debe fallar
@@ -98,9 +98,59 @@ system("newSystem", S1),
     Scrip para systemAddFile
 
     % Se intenta registar un File creado incorrecto, en donde recibe un Nombre que no es string.
-    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), file( "foo.txt", "hello world", F1), systemAddFile(S5, F1, S6).
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), file( 123, "hello world", F1), systemAddFile(S5, F1, S6).
+
+    % se intenta registrar un File creado incorrecto, en donde recibe un Atomo en nombre, que no es un string.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), file( nombreatomo, "hello world", F1), systemAddFile(S5, F1, S6).
+
+    % se registra el File creado correctamente con un nombre "123", que es un string.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), file( "123", "hello world", F1), systemAddFile(S5, F1, S6).
     
     
+    Scrip para systemDel
+
+    % Registra un usuario, inicia sesión, añade un drive, cambia a ese drive, crea un archivo, y luego intenta eliminar un archivo que no existe
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), file("NombreFile", "Archivo1.txt", F1), systemAddFile(S5, F1, S6), systemDel(S6, "ArchivoInexistente.txt", S7). % False, ya que "ArchivoInexistente.txt" no existe en el sistema
+    
+    % Registra un usuario, inicia sesión, añade un drive, cambia a ese drive, crea un archivo, ingresa, crea otro archivo y lo elimina correctamente, lo guarda en papelera.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemDel(S8,"Carpeta2",S9). 
+    
+    % Elimina el File Recien creado, y lo mueve a papelera.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), systemMkdir(S5, "NuevaCarpeta", S6), systemCd(S6, "NuevaCarpeta", S7), file("File1.txt", "Contenido1.txt", F1), systemAddFile(S7, F1, S8), systemDel(S8, "File1.txt", S9). 
+
+
+    Script para systemCopy
+
+    % Realizamos todo el procedimiento hasta cambiar el drive, luego creamos una carpeta, entramos, creamos otra carpeta, y luego esta ultima la copiamos en la raiz.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemCopy(S8,"Carpeta2","D:/",S9).
+
+    % se intenta copiar una carpeta que no existe, retorna false.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCopy(S6,"Carpeta2","D:/",S7).
+
+    % copia el file que se creó dentro de la carpeta1, hacia la ruta raiz.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"Carpeta1",S7),file("file.txt","Hola",F1),systemAddFile(S7,F1,S8),systemCopy(S8,"file.txt","D:/",S9).
+
+
+    Script para systemMove
+
+    % creamos la carpeta Carpeta1 e ingresamos, creamos la carpeta Carpeta2 dentro de Carpeta1, movemos Carpeta2 a la raiz.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemMove(S8,"Carpeta2","D:/",S9).
+
+    % creamos la carpeta Carpeta1 e ingresamos, creamos la carpeta Carpeta2 dentro de Carpeta1, intentamos mover una carpeta inexistente, false.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemMove(S8,"CarpetaInexistente","D:/",S9).
+
+    % se intenta utilizar el predicado systemMove ingresando dados erroneos como argumentos. retorna false.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemMove(S8,1234,ruta,S9).
+
+    Script para systemRen
+    % crea una carpeta1 y carpeta2 dentro de carpeta1, luego renombra carpeta2 por otro nombre, realizando sin probemas.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemRen(S8,"Carpeta2","NewCarpeta2",S9).
+    
+    % crea un file1 en la raiz, y luego renombra el file1 por otro nombre, esto se realiza sin problemas.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),file("file1.txt","HGolaaa",F1),systemAddFile(S5,F1,S6),systemRen(S6,"file1.txt","HOla.txt",S7).
+
+    % se intenta renombrar una carpeta que no existe, retorna false.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemRen(S6,"CarpetaInexistente","Carpeta",S7).
 */
 
 
