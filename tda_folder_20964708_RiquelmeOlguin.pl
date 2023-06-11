@@ -1,7 +1,8 @@
 :- module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3, setRutaFolder/3,getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
                         getFechaModificacionFolder/2]).
 
-folder(Nombre,Creador,Fecha_creacion,Fecha_modificacion,Ruta,[Nombre,Creador,Fecha_creacion,Fecha_modificacion,Ruta]).
+folder(Nombre,Creador,Fecha_creacion,Fecha_modificacion,Ruta,[Nombre,Creador,Fecha_creacion,Fecha_modificacion,Ruta]):-
+    string(Nombre).
 
 addFolderToContenido(Newfolder,Contenido,UpdateContenido):-
     append(Contenido,[Newfolder],UpdateContenido).

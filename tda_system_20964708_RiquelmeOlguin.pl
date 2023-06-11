@@ -20,18 +20,23 @@ system(NombreSistema, Sistema) :-
     filesystem(Nombre, [],[],[],[],[],[],[],[], Sistema).
 
 systemAddDrive(Sistema, Letra, Nombre, Capacidad, Newsistema) :-
+    string(Nombre),
+    string_length(Letra, 1),  % Asegura que Letra tiene un solo carácter
     drive(Letra, Nombre, Capacidad, NewDrive),
     getDrives(Sistema, Drives),
-    \+ member([Letra, _, _], Drives), % Verifica que la letra no est� presente en Drives
+    \+ member([Letra, _, _], Drives),  % Verifica que la letra no esté presente en Drives
     addDriveToDrives(NewDrive, Drives, UpdateDrives),
     setDrives(Sistema, UpdateDrives, Newsistema).
 
+
 systemRegister(Sistema, NombreUser, Sistema) :-
+    string(NombreUser),
     getUsuarios(Sistema, Usuarios),
     user(NombreUser,NewUser),
     member(NewUser, Usuarios), !.
 
 systemRegister(Sistema, NombreUser, Newsistema) :-
+    string(NombreUser),
     user(NombreUser, NewUser),
     string_a_lista(NewUser,UserList),
     getUsuarios(Sistema, Usuarios),
@@ -41,14 +46,23 @@ systemRegister(Sistema, NombreUser, Newsistema) :-
 
 
 
-
 systemLogin(Sistema, NombreUser, Newsistema) :-
     getUsuarioLogeado(Sistema, UsuarioLogeado),
-    UsuarioLogeado = [], % Verifica si la lista est� vac�a
+    UsuarioLogeado = [],
     user(NombreUser, NewUser),
     getUsuarios(Sistema, Usuarios),
     member(NewUser, Usuarios),
-    setUsuarioLogeado(Sistema, NewUser, Newsistema).
+    setUsuarioLogeado(Sistema, NewUser, Newsistema),!.
+
+systemLogin(Sistema, NombreUser, Newsistema) :-
+    getUsuarioLogeado(Sistema, UsuarioLogeado),
+    list_to_string(UsuarioLogeado,UserLog),
+    UserLog = NombreUser,
+    user(NombreUser, NewUser),
+    getUsuarios(Sistema, Usuarios),
+    member(NewUser, Usuarios),
+    setUsuarioLogeado(Sistema, NewUser, Newsistema),!.
+
 
 
 systemLogout(Sistema,Newsistema):-
@@ -57,19 +71,24 @@ systemLogout(Sistema,Newsistema):-
     setUsuarioLogeado(Sistema,[],Newsistema).
 
 
-systemSwitchDrive(Sistema,Letra,Newsistema):-
-    getUsuarioLogeado(Sistema,UsuarioLogeado),
-    list_to_string(UsuarioLogeado,User),
-    \+ systemLogin(Sistema,User,Newsistema),
-    getDrives(Sistema,Drives),
+
+
+systemSwitchDrive(Sistema, Letra, Newsistema):-
+    getUsuarioLogeado(Sistema, UsuarioLogeado),
+    list_to_string(UsuarioLogeado, User),
+    systemLogin(Sistema, User, LoggedInSistema),
+    Sistema == LoggedInSistema, % Continuar solo si systemLogin devolvió el mismo sistema (usuario ya logeado)
+    getDrives(Sistema, Drives),
     member([Letra, _, _], Drives),
-    setDriveActual(Sistema,Letra,NewsistemaDrive),
-    string_concat(Letra,":/",RutaRaiz),
-    setRutaActual(NewsistemaDrive,RutaRaiz,Newsistema).
+    setDriveActual(Sistema, Letra, NewsistemaDrive),
+    string_concat(Letra, ":/", RutaRaiz),
+    setRutaActual(NewsistemaDrive, RutaRaiz, Newsistema).
+
 
 
 systemMkdir(Sistema,Nombre,Newsistema):-
     getUsuarioLogeado(Sistema,UsuarioLogeado),
+    UsuarioLogeado \= [],
     get_time(Time),
     getRutaActual(NewSistemaContenido,RutaActual),
     folder(Nombre,UsuarioLogeado,Time,Time,RutaActual,Newfile),
@@ -87,6 +106,7 @@ systemMkdir(Sistema,Nombre,Newsistema):-
 
 systemMkdir(Sistema,Nombre,Newsistema):-
     getUsuarioLogeado(Sistema,UsuarioLogeado),
+    UsuarioLogeado \= [],
     get_time(Time),
     getRutaActual(NewSistemaContenido,RutaActual),
     folder(Nombre,UsuarioLogeado,Time,Time,RutaActual,Newfile),
@@ -102,6 +122,7 @@ systemMkdir(Sistema,Nombre,Newsistema):-
     \+member(RutaFolder,RutasSistema),
     addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
 
 
 systemCd(Sistema,Nombre,Newsistema):-
@@ -121,19 +142,38 @@ systemCd(Sistema,Nombre,Newsistema):-
     atomic_list_concat(Reverse2,"/",Newpath),
     setRutaActual(Sistema,Newpath,Newsistema),!.
 
+systemCd(Sistema, Nombre, Sistema):-
+    sub_atom(Nombre, 0, 1, _, '.'), !. % Si el Nombre comienza con ".", el sistema permanece sin cambios
+
 systemCd(Sistema, Nombre, Newsistema):-
+    sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre comienza con "/"
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual,":/",RutaRaiz),
+    getRutaActual(Sistema,RutaActual),
+    RutaRaiz = RutaActual,
+    sub_atom(Nombre, 1, _, 0, NombreAux), % Quitamos el "/" inicial del Nombre
+    string_concat(RutaActual,NombreAux,Newruta),
+    getRutasSistema(Sistema,RutasSistema),
+    member(Newruta,RutasSistema),
+    setRutaActual(Sistema,Newruta,Newsistema),!.
+
+
+systemCd(Sistema, Nombre, Newsistema):-
+    \+ sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre no comienza con "/"
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
     getRutaActual(Sistema,RutaActual),
     RutaRaiz = RutaActual,
     string_concat(RutaActual,Nombre,Newruta),
+    getRutasSistema(Sistema,RutasSistema),
+    member(Newruta,RutasSistema),
     setRutaActual(Sistema,Newruta,Newsistema),!.
 
 
 systemCd(Sistema,Nombre,Newsistema):-
     \+ Nombre = "..",
     \+ Nombre = "/",
-    sub_atom(Nombre, 0, 1, _, '/'),
+    sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre comienza con "/"
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,Nombre,Newruta),
     setRutaActual(Sistema,Newruta,Newsistema),!.
@@ -141,11 +181,51 @@ systemCd(Sistema,Nombre,Newsistema):-
 systemCd(Sistema,Nombre,Newsistema):-
     \+ Nombre = "..",
     \+ Nombre = "/",
-    \+ sub_atom(Nombre, 0, 1, _, '/'),
+    \+ sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre no comienza con "/"
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,"/",Ruta1),
     string_concat(Ruta1,Nombre,Newruta),
+    getRutasSistema(Sistema,RutasSistema),
+    member(Newruta,RutasSistema),
     setRutaActual(Sistema,Newruta,Newsistema),!.
+
+
+
+
+
+
+
+systemAddFile(Sistema, File, Newsistema):-
+    getContenido(Sistema,Contenido),
+    addFileToContenido(File,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual, ":/",RutaRaiz),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getNombreFile(File,Nombre),
+    RutaActual = RutaRaiz,
+    string_concat(RutaActual, Nombre, RutaFile),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    member(RutaFile,RutasSistema),
+    getNombreFile(File,NombreFile),
+    systemDelDos(Sistema,NombreFile,Newsistema).!.
+
+
+systemAddFile(Sistema, File, Newsistema):-
+    getContenido(Sistema,Contenido),
+    addFileToContenido(File,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,NewSistemaContenido),
+    getDriveActual(Sistema,DriveActual),
+    string_concat(DriveActual, ":/",RutaRaiz),
+    getRutaActual(NewSistemaContenido,RutaActual),
+    getNombreFile(File,Nombre),
+    RutaActual \= RutaRaiz,
+    string_concat(RutaActual, "/", TempRuta),
+    string_concat(TempRuta, Nombre, RutaFile),
+    getRutasSistema(NewSistemaContenido,RutasSistema),
+    member(RutaFile,RutasSistema),
+    addRutaToRutas(RutaFile,RutasSistema,NewRutasSistema),
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
 
 
 
@@ -258,7 +338,7 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     getContenido(Sistema,Contenido),
     getContenidoFF(Nombre,Contenido,ContenidoFolder),
     setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
-    systemDel2(Sistema,Nombre,NewsistemaAux),
+    systemDelDos(Sistema,Nombre,NewsistemaAux),
     getContenido(NewsistemaAux,ContenidoAux),
     addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
     setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
@@ -279,7 +359,7 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     getContenido(Sistema,Contenido),
     getContenidoFF(Nombre,Contenido,ContenidoFolder),
     setNombreFolder(ContenidoFolder,NuevoNombre,NewFolder),
-    systemDel2(Sistema,Nombre,NewsistemaAux),
+    systemDelDos(Sistema,Nombre,NewsistemaAux),
     getContenido(NewsistemaAux,ContenidoAux),
     addFolderToContenido(NewFolder,ContenidoAux,NewContenidoAux),
     setContenido(NewsistemaAux,NewContenidoAux,NewSistemaContenido),
@@ -502,7 +582,7 @@ atom_to_string(Atom, String) :-
     string_chars(String, CharList).
 
 
-systemDel2(Sistema,NombreEliminar,Newsistema):-
+systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
@@ -516,7 +596,7 @@ systemDel2(Sistema,NombreEliminar,Newsistema):-
     eliminar_carpeta(NombreEliminar,RutaFolder,Contenido,NewContenido),
     setContenido(Sistema,NewContenido,Newsistema).
 
-systemDel2(Sistema,NombreEliminar,Newsistema):-
+systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),

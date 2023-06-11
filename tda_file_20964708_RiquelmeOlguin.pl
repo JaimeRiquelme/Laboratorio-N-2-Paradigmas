@@ -1,6 +1,7 @@
 :- module(tda_file_20964708_RiquelmeOlguin, [file/3 , addFileToContenido/3, getNombreFile/2, getContenidoFile/2]).
 
-file(Nombre,Contenido,[Nombre,Contenido]).
+file(Nombre,Contenido,[Nombre,Contenido]):-
+    string(Nombre).
 
 % Si la lista está vacía, simplemente agrega el archivo.
 addFileToContenido(File, [], [File]).
