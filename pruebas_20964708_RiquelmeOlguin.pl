@@ -3,9 +3,10 @@
                                                systemAddDrive/5,
                                                systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3, systemLogin/3,
                                                systemLogout/2,systemSwitchDrive/3 ,systemMkdir/3, systemCd/3,systemAddFile/3,
-                                               systemDel/3,getRutaActual/2,getContenidoFF/3]).
+                                               systemDel/3,getRutaActual/2,getContenidoFF/3 , systemCopy/4 , systemMove/4 ,
+                                               systemRen/4, systemDir/3]).
 
-:- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3]).
+:- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3, setNombreDrive/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
 :- use_module(tda_folder_20964708_RiquelmeOlguin, [folder/6 , addFolderToContenido/3,setRutaFolder/3,getRutaFolder/2, setNombreFolder/3 ,getNombreFolder/2,getFechaCreacionFolder/2,
                         getFechaModificacionFolder/2]).
@@ -30,17 +31,17 @@ system("newSystem", S1),
     systemAddFile(S14, F2, S15).
 
 
- Casos que deben retornar false: si se intenta a�adir una unidad con una letra que ya existe , Si el usuario ya existe, S debe ser igual a S2.
- system("newSystem", S1), systemRegister(S1, "user1", S2), systemRegister(S2, "user1", S3).
+% Casos que deben retornar false:
+% si se intenta añadir una unidad con una letra que ya existe
+system("newSystem", S1), systemRegister(S1, "user1", S2), systemAddDrive(S2, "C", "OS", 1000000000, S3), systemAddDrive(S3, "C", "otra etiqueta", 1000000000, S4).
 
- si se intenta hacer login con otra sesi�n ya iniciada por este usuario u otro
- system("newSystem", S1), systemRegister(S1, "user1", S2), systemRegister(S2, "user2", S3), systemLogin(S3, "user1", S4), systemLogin(S4, "user2", S5).
+% si se intenta hacer login con otra sesión ya iniciada por este usuario u otro
+system("newSystem", S1), systemRegister(S1, "user1", S2), systemRegister(S2, "user2", S3), systemLogin(S3, "user1", S4), systemLogin(S4, "user2", S5).
 
- si se intenta usar una unidad inexistente 
- system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1", S3), systemSwitchDrive(S3, "K", S4).
+% si se intenta usar una unidad inexistente
+system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1", S3), systemSwitchDrive(S3, "K", S4).
 
 */
-
 
 
 % Scrips de pruebas para cada requerimiento Funcional, 3 pruebas por cada uno.
@@ -143,6 +144,8 @@ system("newSystem", S1),
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemMove(S8,1234,ruta,S9).
 
     Script para systemRen
+
+
     % crea una carpeta1 y carpeta2 dentro de carpeta1, luego renombra carpeta2 por otro nombre, realizando sin probemas.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemRen(S8,"Carpeta2","NewCarpeta2",S9).
     
@@ -152,6 +155,24 @@ system("newSystem", S1),
     % se intenta renombrar una carpeta que no existe, retorna false.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemRen(S6,"CarpetaInexistente","Carpeta",S7).
 */
+
+
+% Caso base: la lista está vacía.
+extraer_nombres([], _, []).
+
+% Caso cuando el valor de precio coincide con el precio buscado.
+extraer_nombres([[Nombre,_,_,Precio]|Resto], PrecioBuscado, [Nombre|Nombres]) :-
+    Precio = PrecioBuscado, !,
+    extraer_nombres(Resto, PrecioBuscado, Nombres).
+
+% Caso cuando el valor de precio no coincide con el precio buscado.
+extraer_nombres([_|Resto], PrecioBuscado, Nombres) :-
+    extraer_nombres(Resto, PrecioBuscado, Nombres).
+
+
+nombres_precio(Lista, PrecioBuscado, Resultado) :-
+    extraer_nombres(Lista, PrecioBuscado, Nombres),
+    atomics_to_string(Nombres, " \n ", Resultado).
 
 
 
