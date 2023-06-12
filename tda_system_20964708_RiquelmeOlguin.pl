@@ -4,7 +4,7 @@
                                                systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3, systemLogin/3,
                                                systemLogout/2,systemSwitchDrive/3 ,systemMkdir/3, systemCd/3,systemAddFile/3,
                                                systemDel/3, getRutaActual/2,getContenidoFF/3,systemCopy/4 , systemMove/4 ,
-                                               systemRen/4, systemDir/3]).
+                                               systemRen/4, systemDir/3 , systemFormat/4]).
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3, setNombreDrive/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
@@ -67,7 +67,7 @@ systemRegister(Sistema, NombreUser, Newsistema) :-
     getUsuarios(Sistema, Usuarios),
     \+ member(UserList, Usuarios), % Verifica que el usuario no está presente en Usuarios
     addUserToUsers(NewUser, Usuarios, UpdateUsers),
-    setUser(Sistema, UpdateUsers, Newsistema).
+    setUser(Sistema, UpdateUsers, Newsistema),!.
 
 
 
@@ -104,7 +104,7 @@ systemLogin(Sistema, NombreUser, Newsistema) :-
 systemLogout(Sistema, Newsistema) :-
     getUsuarioLogeado(Sistema, UsuarioLogeado),
     \+ UsuarioLogeado = [], % Verifica que haya un usuario logeado previamente
-    setUsuarioLogeado(Sistema, [], Newsistema).
+    setUsuarioLogeado(Sistema, [], Newsistema),!.
 
 
 
@@ -121,7 +121,7 @@ systemSwitchDrive(Sistema, Letra, Newsistema) :-
     member([Letra, _, _], Drives),
     setDriveActual(Sistema, Letra, NewsistemaDrive),
     string_concat(Letra, ":/", RutaRaiz),
-    setRutaActual(NewsistemaDrive, RutaRaiz, Newsistema).
+    setRutaActual(NewsistemaDrive, RutaRaiz, Newsistema),!.
 
 
 
@@ -203,19 +203,19 @@ systemCd(Sistema, Nombre, Newsistema):-
 % Metas Primarias: systemCd
 % Metas Secundarias: sub_atom
 systemCd(Sistema, Nombre, Sistema):-
-    sub_atom(Nombre, 0, 1, _, '.'), !. % Si el Nombre comienza con ".", el sistema permanece sin cambios
+    sub_atom(Nombre, 0, 1, _, '.'), !. 
 
 % Descripcion: Predicado que cambia el directorio actual del sistema a una ruta absoluta.
 % Dominio: Sistema X Nombre X NewSistema
 % Metas Primarias: systemCd
 % Metas Secundarias: sub_atom, getDriveActual, string_concat, getRutaActual, getRutasSistema, member, setRutaActual
 systemCd(Sistema, Nombre, Newsistema):-
-    sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre comienza con "/"
+    sub_atom(Nombre, 0, 1, _, '/'), 
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
     getRutaActual(Sistema,RutaActual),
     RutaRaiz = RutaActual,
-    sub_atom(Nombre, 1, _, 0, NombreAux), % Quitamos el "/" inicial del Nombre
+    sub_atom(Nombre, 1, _, 0, NombreAux), 
     string_concat(RutaActual,NombreAux,Newruta),
     getRutasSistema(Sistema,RutasSistema),
     member(Newruta,RutasSistema),
@@ -243,7 +243,7 @@ systemCd(Sistema, Nombre, Newsistema):-
 systemCd(Sistema,Nombre,Newsistema):-
     \+ Nombre = "..",
     \+ Nombre = "/",
-    sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre comienza con "/"
+    sub_atom(Nombre, 0, 1, _, '/'), 
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,Nombre,Newruta),
     setRutaActual(Sistema,Newruta,Newsistema),!.
@@ -255,7 +255,7 @@ systemCd(Sistema,Nombre,Newsistema):-
 systemCd(Sistema,Nombre,Newsistema):-
     \+ Nombre = "..",
     \+ Nombre = "/",
-    \+ sub_atom(Nombre, 0, 1, _, '/'), % Rama para cuando Nombre no comienza con "/"
+    \+ sub_atom(Nombre, 0, 1, _, '/'), 
     getRutaActual(Sistema,RutaActual),
     string_concat(RutaActual,"/",Ruta1),
     string_concat(Ruta1,Nombre,Newruta),
@@ -330,6 +330,7 @@ systemDel(Sistema,NombreEliminar,Newsistema):-
 % Metas Primarias: systemDel
 % Metas Secundarias: getRutaActual, getDriveActual, string_concat, \=, string_concat, member, getContenido, getContenidoFF, setPapelera, getRutaFolder, eliminar_carpeta, setContenido
 systemDel(Sistema,NombreEliminar,Newsistema):-
+    NombreEliminar \= "*",
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
@@ -350,6 +351,7 @@ systemDel(Sistema,NombreEliminar,Newsistema):-
 % Metas Primarias: systemDel
 % Metas Secundarias: getRutaActual, getDriveActual, string_concat, \=, string_concat, member, getContenido, getContenidoFF, setPapelera, eliminar_file, setContenido
 systemDel(Sistema,NombreEliminar,Newsistema):-
+    NombreEliminar \= "*",
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
     string_concat(DriveActual,":/",RutaRaiz),
@@ -364,6 +366,13 @@ systemDel(Sistema,NombreEliminar,Newsistema):-
     eliminar_file(NombreEliminar,Contenido,NewContenido),
     setContenido(NewsistemaPapelera,NewContenido,Newsistema),!.
 
+systemDel(Sistema,NombreEliminar,Newsistema):-
+    NombreEliminar = "*",
+    getContenido(Sistema,Contenido),
+    setContenido(Sistema,[],NewSistemaContenido),
+    setRutasSistema(NewSistemaContenido,[],NewsistemaRutas),
+    setPapelera(NewsistemaRutas,Contenido,Newsistema),!.
+
 
 
 
@@ -372,6 +381,7 @@ systemDel(Sistema,NombreEliminar,Newsistema):-
 % Metas Primarias: systemCopy
 % Metas Secundarias: split_string, length, getContenido, getContenidoFF, setRutaFolder, addFolderToContenido, setContenido, string_concat, getRutasSistema, \+member, addRutaToRutas, setRutasSistema
 systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
+    NombreCopiar \= "*",
     split_string(NombreCopiar,".","",Split),
     length(Split,LargoLista),
     LargoLista = 1,
@@ -391,6 +401,7 @@ systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
 % Metas Primarias: systemCopy
 % Metas Secundarias: split_string, length, getContenido, getContenidoFF, addFolderToContenido, setContenido, string_concat, getRutasSistema, \+member, addRutaToRutas, setRutasSistema
 systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
+    NombreCopiar \= "*",
     split_string(NombreCopiar,".","",Split),
     length(Split,LargoLista),
     LargoLista = 2,
@@ -403,6 +414,20 @@ systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
     \+member(RutaFolder,RutasSistema),
     addRutaToRutas(RutaFolder,RutasSistema,NewRutasSistema),
     setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
+
+
+% Descripcion: Predicado que realiza la copia de un archivo en el sistema.
+% Dominio: Sistema X NombreCopiar X RutaDestino X NewSistema
+% Metas Primarias: systemCopy
+% Metas Secundarias: getContenido,actualizar_ruta,append,setContenido.
+
+systemCopy(Sistema,NombreCopiar,RutaDestino,Newsistema):-
+    NombreCopiar = "*",
+    getContenido(Sistema,Contenido),
+    actualizar_ruta(Contenido,RutaDestino,ContenidoCopia),
+    append(ContenidoCopia,Contenido,NewContenido),
+    setContenido(Sistema,NewContenido,Newsistema),!.
+
 
 % Descripcion: Predicado que mueve un archivo o carpeta a una nueva ruta en el sistema.
 % Dominio: Sistema X NombreMover X RutaDestino X NewSistema
@@ -420,7 +445,7 @@ systemMove(Sistema,NombreMover,RutaDestino,Newsistema):-
     string_concat(RutaAux,NombreMover,RutaFolder),
     getRutasSistema(NewsistemaAux,RutasSistema),
     select(RutaFolder,RutasSistema,NewRutasSistema),
-    setRutasSistema(NewsistemaAux,NewRutasSistema,Newsistema).
+    setRutasSistema(NewsistemaAux,NewRutasSistema,Newsistema),!.
 
 
 
@@ -738,6 +763,16 @@ string_a_lista(String,[String]).
 % Metas Secundarias: N/A
 quitar_cabeza([], []).
 quitar_cabeza([_|Cola], Cola).
+
+
+
+% Caso base: lista vacía.
+actualizar_ruta([], _, []).
+
+% Caso recursivo: Toma una sublista [H|T], la ruta nueva, y devuelve una nueva sublista con la ruta actualizada.
+actualizar_ruta([[H1,H2,H3,H4,_]|T], NuevaRuta, [[H1,H2,H3,H4,NuevaRuta]|T2]) :-
+    actualizar_ruta(T, NuevaRuta, T2).
+
 
 
 

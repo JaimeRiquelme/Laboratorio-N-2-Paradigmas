@@ -4,7 +4,7 @@
                                                systemRegister/3, getDrives/2, setDrives/3, getUsuarios/2, setUser/3, systemLogin/3,
                                                systemLogout/2,systemSwitchDrive/3 ,systemMkdir/3, systemCd/3,systemAddFile/3,
                                                systemDel/3,getRutaActual/2,getContenidoFF/3 , systemCopy/4 , systemMove/4 ,
-                                               systemRen/4, systemDir/3]).
+                                               systemRen/4, systemDir/3 ,systemFormat/4]).
 
 :- use_module(tda_drive_20964708_RiquelmeOlguin, [drive/4, addDriveToDrives/3, setNombreDrive/3]).
 :- use_module(tda_user_20964708_RiquelmeOlguin, [user/2, addUserToUsers/3]).
@@ -116,8 +116,8 @@ system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1
     % Registra un usuario, inicia sesión, añade un drive, cambia a ese drive, crea un archivo, ingresa, crea otro archivo y lo elimina correctamente, lo guarda en papelera.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemDel(S8,"Carpeta2",S9). 
     
-    % Elimina el File Recien creado, y lo mueve a papelera.
-    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5), systemMkdir(S5, "NuevaCarpeta", S6), systemCd(S6, "NuevaCarpeta", S7), file("File1.txt", "Contenido1.txt", F1), systemAddFile(S7, F1, S8), systemDel(S8, "File1.txt", S9). 
+    % Crea dos carpetas y utliza la entrada "*" para eliminar todo el contenido del dir actual. se va a papelera.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemMkdir(S6,"Carpeta2",S7),systemDel(S7,"*",S8).
 
 
     Script para systemCopy
@@ -130,6 +130,9 @@ system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1
 
     % copia el file que se creó dentro de la carpeta1, hacia la ruta raiz.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"Carpeta1",S7),file("file.txt","Hola",F1),systemAddFile(S7,F1,S8),systemCopy(S8,"file.txt","D:/",S9).
+
+    % script opcional: usa el "*" para copiar varios archivos.
+    system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemAddDrive(S2,"C","Drive2",20000,S3), systemRegister(S3, "Usuario1", S4), systemLogin(S4, "Usuario1", S5), systemSwitchDrive(S5, "D", S6),systemMkdir(S6,"Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemCopy(S8,"*","C:/",S9).
 
 
     Script para systemMove
