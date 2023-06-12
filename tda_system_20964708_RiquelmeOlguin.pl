@@ -500,7 +500,7 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
     getRutasSistema(NewSistemaContenido,RutasSistema),
     select(RutaEliminar,RutasSistema,NewRutasSistemaAux),
     addRutaToRutas(Newruta,NewRutasSistemaAux,NewRutasSistema),
-    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema).
+    setRutasSistema(NewSistemaContenido,NewRutasSistema,Newsistema),!.
 
 
 
@@ -512,7 +512,7 @@ systemRen(Sistema,Nombre,NuevoNombre,Newsistema):-
 systemDir(Sistema, [], Str) :-
     getContenido(Sistema, Contenido),
     getRutaActual(Sistema, RutaActual),
-    systemDir_aux(Contenido, RutaActual, "", Str).
+    systemDir_aux(Contenido, RutaActual, "", Str),!.
 
 
 
@@ -523,6 +523,7 @@ systemDir(Sistema, [], Str) :-
 %                   setContenido,getRutasSistema,eliminarPath,setRutasSistema.
 
 systemFormat(Sistema, Letra, NuevoNombre, Newsistema) :-
+    string(NuevoNombre),
     getDrives(Sistema, ContenidoDrives), % obtener todos los drives del sistema
     getContenidoDrive(Letra, ContenidoDrives, ContenidoD), % obtener el contenido de un drive específico
     setNombreDrive(ContenidoD, NuevoNombre, NewDrive), % cambiar el nombre del drive
@@ -534,7 +535,7 @@ systemFormat(Sistema, Letra, NuevoNombre, Newsistema) :-
     setContenido(NewsistemaAux,ContenidoNew,SistemaAux),
     getRutasSistema(SistemaAux,RutasSistema),
     eliminarPath(Letra,RutasSistema,NewRutasSistema),
-    setRutasSistema(SistemaAux,NewRutasSistema,Newsistema).
+    setRutasSistema(SistemaAux,NewRutasSistema,Newsistema),!.
 
 
 
@@ -709,58 +710,68 @@ getRutaActual(Sistema, RutaActual) :-
 
 
 
-%otras funciones
+% ---------------------------------------OTRAS FUNCIONES -------------------------------------------------
 
+% Descripcion: Predicado que registra el nombre de un sistema junto con el tiempo actual.
+% Dominio: Nombre X Time X [Nombre, Time]
+% Metas Primarias: nombre_Sistema
+% Metas Secundarias: get_time
 nombre_Sistema(Nombre,[Nombre,Time]):-
     get_time(Time).
 
+% Descripcion: Predicado que convierte una lista en un string, donde el string es un miembro de la lista.
+% Dominio: Lista X String
+% Metas Primarias: list_to_string
+% Metas Secundarias: member
 list_to_string(List, String):-
     member(String, List).
 
+% Descripcion: Predicado que convierte un string en una lista que contiene ese string.
+% Dominio: String X [String]
+% Metas Primarias: string_a_lista
+% Metas Secundarias: N/A
 string_a_lista(String,[String]).
 
-
+% Descripcion: Predicado que quita la cabeza (el primer elemento) de una lista.
+% Dominio: [Cabeza|Cola] X [Cola]
+% Metas Primarias: quitar_cabeza
+% Metas Secundarias: N/A
 quitar_cabeza([], []).
 quitar_cabeza([_|Cola], Cola).
 
-% si es mayúscula la convierte a minúscula
-to_minuscula(Caracter, CaracterMinuscula) :-
-    char_code(Caracter, Codigo),
-    Codigo >= 65, Codigo =< 90,
-    CodigoMinuscula is Codigo + 32,
-    char_code(CaracterMinuscula, CodigoMinuscula).
 
-% si no es mayúscula, responde con el mismo caracter
-to_minuscula(Caracter, Caracter) :-
-    char_code(Caracter, Codigo),
-    (Codigo < 65 ; Codigo > 90).
 
-% convierte todos los caracteres de un string a minúsculas y responde el string resultante
-string_downcase(Palabra, PalabraMinuscula) :-
-    atom_chars(Palabra, ListaCaracteres),
-    maplist(to_minuscula, ListaCaracteres, ListaMinuscula),
-    atom_chars(PalabraMinuscula, ListaMinuscula).
-
+% Descripcion: Predicado que agrega una nueva ruta al final de una lista de rutas existentes.
+% Dominio: Ruta X Rutas X NewRutas
+% Metas Primarias: addRutaToRutas
+% Metas Secundarias: append
 addRutaToRutas(Ruta,Rutas,NewRutas):-
     append(Rutas,[Ruta],NewRutas).
 
 
+% Descripcion: Predicado que verifica si una ruta específica pertenece a una lista de rutas.
+% Dominio: Ruta X Rutas
+% Metas Primarias: pertenece
+% Metas Secundarias: atom_string, member, atomic_list_concat
 pertenece(Ruta, Rutas) :-
-    atom_string(AtomRuta, Ruta),     % Convertir la ruta dada a un átomo
-    member(RutaLista, Rutas),        % Para cada sublista en la lista de rutas...
-    atomic_list_concat(RutaLista, '/', AtomRutaLista), % ... combinar sus elementos en un átomo
-    AtomRutaLista = AtomRuta.        % ... y comprobar si ese átomo coincide con el dado
+    atom_string(AtomRuta, Ruta),     
+    member(RutaLista, Rutas),        
+    atomic_list_concat(RutaLista, '/', AtomRutaLista), 
+    AtomRutaLista = AtomRuta.       
 
 
 
-
-
-
-% Predicado principal
+% Descripcion: Predicado que elimina una carpeta específica de una lista de carpetas.
+% Dominio: Nombre X Ruta X ListaEntrada X ListaSalida
+% Metas Primarias: eliminar_carpeta
+% Metas Secundarias: eliminar_carpeta_aux
 eliminar_carpeta(Nombre, Ruta, ListaEntrada, ListaSalida) :-
     eliminar_carpeta_aux(Nombre, Ruta, ListaEntrada, [], ListaSalida).
 
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que ayuda a eliminar una carpeta específica de una lista de carpetas.
+% Dominio: Nombre X Ruta X [[NombreCarpeta,_,_,_,RutaCarpeta]|Cola] X Acumulador X ListaSalida
+% Metas Primarias: eliminar_carpeta_aux
+% Metas Secundarias: sub_atom, append
 eliminar_carpeta_aux(_, _, [], Acumulador, Acumulador).
 eliminar_carpeta_aux(Nombre, Ruta, [[NombreCarpeta,_,_,_,RutaCarpeta]|Cola], Acumulador, ListaSalida) :-
     NombreCarpeta = Nombre,
@@ -774,9 +785,20 @@ eliminar_carpeta_aux(Nombre, Ruta, [Cabeza|Cola], Acumulador, ListaSalida) :-
 
 
 
+% Descripcion: Predicado que elimina un archivo específico de una lista de archivos.
+% Dominio: Nombre X ListaEntrada X ListaSalida
+% Metas Primarias: eliminar_file
+% Metas Secundarias: eliminar_file_aux
 eliminar_file(Nombre, ListaEntrada, ListaSalida) :-
     eliminar_file_aux(Nombre, ListaEntrada, [], ListaSalida).
 
+
+    
+
+% Descripcion: Predicado auxiliar que ayuda a eliminar un archivo específico de una lista de archivos.
+% Dominio: Nombre X [Cabeza|Cola] X Acumulador X ListaSalida
+% Metas Primarias: eliminar_file_aux
+% Metas Secundarias: append
 eliminar_file_aux(_, [], Acumulador, Acumulador).
 eliminar_file_aux(Nombre, [Cabeza|Cola], Acumulador, ListaSalida) :-
     Cabeza = [NombreCarpeta|_],
@@ -793,10 +815,17 @@ eliminar_file_aux(Nombre, [Cabeza|Cola], Acumulador, ListaSalida) :-
 
 
 
-
+% Descripcion: Predicado que obtiene el contenido de un archivo o carpeta específica de una lista de carpetas y archivos.
+% Dominio: Nombre X ListaFolders X FileEncontrado
+% Metas Primarias: getContenidoFF
+% Metas Secundarias: getContenidoFF_aux
 getContenidoFF(Nombre, ListaFolders, FileEncontrado) :-
     getContenidoFF_aux(Nombre, ListaFolders, FileEncontrado).
 
+% Descripcion: Predicado auxiliar que ayuda a obtener el contenido de un archivo o carpeta específica de una lista de carpetas y archivos.
+% Dominio: Nombre X [[Nombre|Resto]|_] X [Nombre|Resto]
+% Metas Primarias: getContenidoFF_aux
+% Metas Secundarias: N/A
 getContenidoFF_aux(_, [], []).
 getContenidoFF_aux(Nombre, [[Nombre|Resto]|_], [Nombre|Resto]).
 getContenidoFF_aux(Nombre, [Cabeza|Cola], FileEncontrado) :-
@@ -804,12 +833,22 @@ getContenidoFF_aux(Nombre, [Cabeza|Cola], FileEncontrado) :-
     getContenidoFF_aux(Nombre, Cola, FileEncontrado).
 
 
-% Predicado para convertir un átomo a una cadena de caracteres
+% Descripcion: Predicado que convierte un átomo en una cadena de caracteres.
+% Dominio: Atom X String
+% Metas Primarias: atom_to_string
+% Metas Secundarias: atom_chars, string_chars
 atom_to_string(Atom, String) :-
     atom_chars(Atom, CharList),
     string_chars(String, CharList).
 
 
+
+% Descripcion: Predicado que elimina una carpeta o archivo del sistema. 
+%              Esta versión se encarga de la eliminación cuando la carpeta está en la ruta raíz.
+% Dominio: Sistema X NombreEliminar X Newsistema
+% Metas Primarias: systemDelDos
+% Metas Secundarias: getRutaActual, getDriveActual, string_concat, getRutasSistema, member, getContenido,
+%                    getContenidoFF, getRutaFolder, eliminar_carpeta, setContenido
 systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
@@ -824,6 +863,14 @@ systemDelDos(Sistema,NombreEliminar,Newsistema):-
     eliminar_carpeta(NombreEliminar,RutaFolder,Contenido,NewContenido),
     setContenido(Sistema,NewContenido,Newsistema).
 
+
+
+% Descripcion: Predicado que elimina una carpeta del sistema.
+%              Esta versión se encarga de la eliminación cuando la carpeta no está en la ruta raíz.
+% Dominio: Sistema X NombreEliminar X Newsistema
+% Metas Primarias: systemDelDos
+% Metas Secundarias: getRutaActual, getDriveActual, string_concat, getRutasSistema, member, getContenido,
+%                    getContenidoFF, getRutaFolder, eliminar_carpeta, setContenido
 systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
@@ -840,6 +887,14 @@ systemDelDos(Sistema,NombreEliminar,Newsistema):-
     setContenido(Sistema,NewContenido,Newsistema).
 
 
+
+
+% Descripcion: Predicado que elimina un archivo del sistema.
+%              Esta versión se encarga de la eliminación cuando el archivo está en la ruta raíz.
+% Dominio: Sistema X NombreEliminar X Newsistema
+% Metas Primarias: systemDelDos
+% Metas Secundarias: getRutaActual, getDriveActual, string_concat, getRutasSistema, member, getContenido,
+%                    eliminar_file, setContenido
 systemDelDos(Sistema,NombreEliminar,Newsistema):-
     getRutaActual(Sistema,RutaActual),
     getDriveActual(Sistema,DriveActual),
@@ -855,8 +910,10 @@ systemDelDos(Sistema,NombreEliminar,Newsistema):-
 
 
 
-
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que genera una lista de los nombres de archivos y carpetas en la ruta actual.
+% Dominio: Lista X RutaActual X StrAcc X Str
+% Metas Primarias: systemDir_aux
+% Metas Secundarias: atom_concat
 % Caso base: la lista está vacía.
 systemDir_aux([], _, StrAcc, StrAcc).
 
@@ -873,22 +930,38 @@ systemDir_aux([_|Resto], RutaActual, StrAcc, Str) :-
 
 
 
-% Predicado principal
+
+% Descripcion: Predicado principal que obtiene el contenido de un drive específico.
+% Dominio: Letra X ListaDrives X DriveEncontrado
+% Metas Primarias: getContenidoDrive
+% Metas Secundarias: getContenidoDrive_aux
 getContenidoDrive(Letra, ListaDrives, DriveEncontrado) :-
     getContenidoDrive_aux(Letra, ListaDrives, DriveEncontrado).
 
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que busca un drive en la lista de drives.
+% Dominio: Letra X ListaDrives X DriveEncontrado
+% Metas Primarias: getContenidoDrive_aux
 getContenidoDrive_aux(_, [], []).
 getContenidoDrive_aux(Letra, [[Letra|Resto]|_], [Letra|Resto]).
 getContenidoDrive_aux(Letra, [Cabeza|Cola], DriveEncontrado) :-
     Cabeza \= [Letra|_],
     getContenidoDrive_aux(Letra, Cola, DriveEncontrado).
 
-% Predicado principal
+
+
+
+
+% Descripcion: Predicado principal que elimina un drive específico de una lista de drives.
+% Dominio: Letra X ListaEntrada X ListaSalida
+% Metas Primarias: eliminar_drive
+% Metas Secundarias: eliminar_drive_aux
 eliminar_drive(Letra, ListaEntrada, ListaSalida) :-
     eliminar_drive_aux(Letra, ListaEntrada, [], ListaSalida).
 
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que elimina el drive especificado de la lista de drives.
+% Dominio: Letra X Lista X Acumulador X ListaSalida
+% Metas Primarias: eliminar_drive_aux
+% Metas Secundarias: append
 eliminar_drive_aux(_, [], Acumulador, Acumulador).
 eliminar_drive_aux(Letra, [[LetraDrive|_]|Cola], Acumulador, ListaSalida) :-
     LetraDrive = Letra,
@@ -899,11 +972,18 @@ eliminar_drive_aux(Letra, [Cabeza|Cola], Acumulador, ListaSalida) :-
     eliminar_drive_aux(Letra, Cola, NuevoAcumulador, ListaSalida).
 
 
-% Predicado principal
+
+% Descripcion: Predicado principal que elimina todas las rutas que comienzan con una letra específica de una lista de rutas.
+% Dominio: Letra X ListaEntrada X ListaSalida
+% Metas Primarias: eliminarPath
+% Metas Secundarias: eliminarPath_aux
 eliminarPath(Letra, ListaEntrada, ListaSalida) :-
     eliminarPath_aux(Letra, ListaEntrada, [], ListaSalida).
 
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que elimina las rutas que comienzan con la letra especificada de la lista de rutas.
+% Dominio: Letra X Lista X Acumulador X ListaSalida
+% Metas Primarias: eliminarPath_aux
+% Metas Secundarias: append, sub_string
 eliminarPath_aux(_, [], Acumulador, Acumulador).
 eliminarPath_aux(Letra, [Cabeza|Cola], Acumulador, ListaSalida) :-
     sub_string(Cabeza, 0, 1, _, LetraInicial),
@@ -915,11 +995,18 @@ eliminarPath_aux(Letra, [_|Cola], Acumulador, ListaSalida) :-
 
 
 
-% Predicado principal
+
+% Descripcion: Predicado principal que elimina todos los folders cuya ruta comienza con una letra específica de una lista de folders.
+% Dominio: Letra X ListaEntrada X ListaSalida
+% Metas Primarias: eliminarFoldersPorRuta
+% Metas Secundarias: eliminarFoldersPorRuta_aux
 eliminarFoldersPorRuta(Letra, ListaEntrada, ListaSalida) :-
     eliminarFoldersPorRuta_aux(Letra, ListaEntrada, [], ListaSalida).
 
-% Predicado auxiliar
+% Descripcion: Predicado auxiliar que elimina los folders cuya ruta comienza con la letra especificada de la lista de folders.
+% Dominio: Letra X Lista X Acumulador X ListaSalida
+% Metas Primarias: eliminarFoldersPorRuta_aux
+% Metas Secundarias: append, sub_string, last
 eliminarFoldersPorRuta_aux(_, [], Acumulador, Acumulador).
 eliminarFoldersPorRuta_aux(Letra, [Cabeza|Cola], Acumulador, ListaSalida) :-
     last(Cabeza, Ruta),
@@ -929,4 +1016,5 @@ eliminarFoldersPorRuta_aux(Letra, [Cabeza|Cola], Acumulador, ListaSalida) :-
     eliminarFoldersPorRuta_aux(Letra, Cola, NuevoAcumulador, ListaSalida).
 eliminarFoldersPorRuta_aux(Letra, [_|Cola], Acumulador, ListaSalida) :-
     eliminarFoldersPorRuta_aux(Letra, Cola, Acumulador, ListaSalida).
+
 

@@ -48,8 +48,8 @@ system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1
 
 /* Scrip para system
 
-    system(1,S). % intenta crear
-    system(c,S).
+    system(1,S). % intenta crear un sistema de nombre incorrecto
+    system(c,S). % intenta crear un sistema de nombre incorrecto
     system("123456",S). % Crea un sistema de Nombre "123456" que es un string
 
 
@@ -145,7 +145,6 @@ system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1
 
     Script para systemRen
 
-
     % crea una carpeta1 y carpeta2 dentro de carpeta1, luego renombra carpeta2 por otro nombre, realizando sin probemas.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemCd(S6,"/Carpeta1",S7),systemMkdir(S7,"Carpeta2",S8),systemRen(S8,"Carpeta2","NewCarpeta2",S9).
     
@@ -154,25 +153,30 @@ system("newSystem", S1), systemRegister(S1, "user1", S2), systemLogin(S2, "user1
 
     % se intenta renombrar una carpeta que no existe, retorna false.
     system("newSystem", S1), systemAddDrive(S1, "D", "Drive1", 1000000, S2), systemRegister(S2, "Usuario1", S3), systemLogin(S3, "Usuario1", S4), systemSwitchDrive(S4, "D", S5),systemMkdir(S5,"Carpeta1",S6),systemRen(S6,"CarpetaInexistente","Carpeta",S7).
+
+    Script para systemDir
+
+    % crea dos archivos en la raiz y usa systemDir para mostrar los archivos en el directorio actual.
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemRegister(S3, "user2", S4), systemLogin(S4, "user1", S5), systemSwitchDrive(S5, "C", S6), systemMkdir(S6, "folder1", S7), systemMkdir(S7, "folder2", S8),systemDir(S8,[],Str),writeln(Str).
+
+    % creamos un folder, e ingresamos, creamos dos folders dentro de el y usamos systemDir.
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemLogin(S3, "user1", S4),systemSwitchDrive(S4,"C",S5),systemMkdir(S5,"folder1",S6),systemCd(S6,"folder1",S7),systemMkdir(S7,"folder2",S8),systemMkdir(S8,"folder3",S9),systemDir(S9,[],Str),writeln(Str).
+
+    % mismas carpetas que el codigo anterior, solo que ahora se esta posicionado en la raiz, muestra solo la primera carpeta.
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemLogin(S3, "user1", S4),systemSwitchDrive(S4,"C",S5),systemMkdir(S5,"folder1",S6),systemCd(S6,"folder1",S7),systemMkdir(S7,"folder2",S8),systemMkdir(S8,"folder3",S9),systemCd(S9,"/",S10),systemDir(S10,[],Str),writeln(Str).
+
+    Script para Format
+
+    % se crean dos drives distintos, y se crean carpetas en ambos drives, luego se formatea una unidad quedando todos los elementos restantes de la otra unidad.
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemRegister(S3, "user2", S4), systemLogin(S4, "user1", S5), systemSwitchDrive(S5, "C", S6), systemMkdir(S6, "folder1", S7), systemMkdir(S7, "folder2", S8),systemAddDrive(S8,"D","Na",2222,S9),systemSwitchDrive(S9,"D",S10),systemMkdir(S10,"folder23",S11),systemFormat(S11,"C","NuevoDiscoC",S12).
+
+    % se intenta formatear una unidad inexistente. 
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemRegister(S3, "user2", S4), systemLogin(S4, "user1", S5), systemSwitchDrive(S5, "C", S6), systemMkdir(S6, "folder1", S7),systemFormat(S7,"K","Inexistente",S8).
+
+    % se ingresa un nombre nuevo invalido. 
+    system("newSystem", S1), systemAddDrive(S1, "C", "OS", 10000000000, S2), systemRegister(S2, "user1", S3), systemRegister(S3, "user2", S4), systemLogin(S4, "user1", S5), systemSwitchDrive(S5, "C", S6), systemMkdir(S6, "folder1", S7),systemFormat(S7,"C",NombreInvalido,S8).
 */
 
-
-% Caso base: la lista está vacía.
-extraer_nombres([], _, []).
-
-% Caso cuando el valor de precio coincide con el precio buscado.
-extraer_nombres([[Nombre,_,_,Precio]|Resto], PrecioBuscado, [Nombre|Nombres]) :-
-    Precio = PrecioBuscado, !,
-    extraer_nombres(Resto, PrecioBuscado, Nombres).
-
-% Caso cuando el valor de precio no coincide con el precio buscado.
-extraer_nombres([_|Resto], PrecioBuscado, Nombres) :-
-    extraer_nombres(Resto, PrecioBuscado, Nombres).
-
-
-nombres_precio(Lista, PrecioBuscado, Resultado) :-
-    extraer_nombres(Lista, PrecioBuscado, Nombres),
-    atomics_to_string(Nombres, " \n ", Resultado).
 
 
 
